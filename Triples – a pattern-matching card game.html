@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Triples – a pattern-matching card game</title>
+<style>
+:root{
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+  --bg:#ece8e0; --panel:#fbfaf7; --ink:#1d1b24; --muted:#6c6877; --line:#cfc9bd;
+  --accent:#2a2f6b; --sel:#2a2f6b; --good:#1f9d55; --bad:#d9363e;
+  --c0:#d9363e; --c1:#1f9d55; --c2:#6b3fa0;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#14131a; --panel:#23212c; --ink:#f1eee8; --muted:#a29eb0; --line:#3a3746;
+    --accent:#9aa3ff; --sel:#9aa3ff; --c0:#ff6b6f; --c1:#3ecf84; --c2:#a77be0;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#14131a; --panel:#23212c; --ink:#f1eee8; --muted:#a29eb0; --line:#3a3746;
+  --accent:#9aa3ff; --sel:#9aa3ff; --c0:#ff6b6f; --c1:#3ecf84; --c2:#a77be0;
+}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Trebuchet MS","Segoe UI",system-ui,sans-serif;min-height:100vh}
+.wrap{max-width:900px;margin:0 auto;padding:16px}
+header{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:8px 16px;margin-bottom:12px}
+h1{margin:0;font-family:Georgia,"Times New Roman",serif;font-size:2rem;letter-spacing:.01em}
+.stats{display:flex;gap:18px;font-size:.95rem;color:var(--muted)}
+.stats b{display:block;font-size:1.3rem;color:var(--ink);font-variant-numeric:tabular-nums}
+#msg{min-height:1.6em;margin:4px 0 12px;font-weight:600;color:var(--muted)}
+#msg.good{color:var(--good)} #msg.bad{color:var(--bad)}
+#board{display:grid;grid-template-columns:repeat(var(--cols,4),1fr);gap:12px}
+.card{
+  aspect-ratio:3/2;background:var(--panel);border:2px solid var(--line);border-radius:12px;
+  display:flex;align-items:center;justify-content:center;gap:6%;cursor:pointer;padding:6% 4%;
+  font:inherit;color:inherit;transition:transform .12s,border-color .12s,box-shadow .12s;
+}
+.card:hover{transform:translateY(-2px)}
+.card:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.card.sel{border-color:var(--sel);box-shadow:0 0 0 3px var(--sel);transform:translateY(-3px)}
+.card.hint{border-color:var(--good);box-shadow:0 0 0 3px var(--good)}
+.card.ok{border-color:var(--good);box-shadow:0 0 0 3px var(--good)}
+.card.no{animation:shake .35s;border-color:var(--bad);box-shadow:0 0 0 3px var(--bad)}
+.card.pop{animation:pop .25s}
+@keyframes shake{25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+@keyframes pop{from{transform:scale(.85);opacity:0}}
+.card svg{height:100%;max-height:100%;width:auto;flex:0 1 26%;min-width:0}
+.controls{display:flex;flex-wrap:wrap;gap:10px;margin-top:16px}
+button.btn{font:inherit;font-weight:600;padding:10px 16px;border-radius:10px;border:2px solid var(--accent);
+  background:transparent;color:var(--accent);cursor:pointer}
+button.btn.primary{background:var(--accent);color:var(--bg)}
+button.btn:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+details{margin-top:18px;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px 14px;line-height:1.5}
+summary{cursor:pointer;font-weight:600}
+#over{display:none;margin-top:14px;padding:16px;border-radius:12px;background:var(--panel);border:2px solid var(--good)}
+@media (max-width:600px){
+  #board{grid-template-columns:repeat(3,1fr);gap:8px}
+  .card{padding:5% 3%;border-radius:9px}
+  h1{font-size:1.6rem}
+}
+@media (prefers-reduced-motion:reduce){.card,.card.no,.card.pop{animation:none;transition:none}}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <pattern id="st0" width="4" height="4.5" patternUnits="userSpaceOnUse"><rect width="4" height="1.6" fill="var(--c0)"/></pattern>
+    <pattern id="st1" width="4" height="4.5" patternUnits="userSpaceOnUse"><rect width="4" height="1.6" fill="var(--c1)"/></pattern>
+    <pattern id="st2" width="4" height="4.5" patternUnits="userSpaceOnUse"><rect width="4" height="1.6" fill="var(--c2)"/></pattern>
+  </defs>
+</svg>
+
+<div class="wrap">
+  <header>
+    <h1>Triples</h1>
+    <div class="stats">
+      <div>Sets<b id="sets">0</b></div>
+      <div>Score<b id="score">0</b></div>
+      <div>Deck<b id="deck">69</b></div>
+      <div>Time<b id="time">0:00</b></div>
+    </div>
+  </header>
+
+  <div id="msg" role="status" aria-live="polite">Pick three cards that form a set.</div>
+  <div id="board"></div>
+  <div id="over"></div>
+
+  <div class="controls">
+    <button class="btn" id="hintBtn">Hint</button>
+    <button class="btn" id="addBtn">Add 3 cards</button>
+    <button class="btn primary" id="newBtn">New game</button>
+  </div>
+
+  <details>
+    <summary>How to play</summary>
+    <p>Every card has four features: <b>number</b> (1, 2, 3), <b>shape</b> (diamond, oval, squiggle), <b>color</b> (red, green, purple) and <b>shading</b> (solid, striped, open). A set is three cards where, for each feature, all three cards are the <i>same</i> or all three are <i>different</i>.</p>
+    <p>Select three cards. A valid set is removed and replaced from the deck (+3 points). An invalid pick costs 1 point. If you can’t find a set, use Hint (−1) or add three more cards. The game ends when the deck is empty and no sets remain.</p>
+  </details>
+</div>
+
+<script>
+(function(){
+  var COLORS=['var(--c0)','var(--c1)','var(--c2)'];
+  var SHAPES=[
+    '<path d="M20 4 L36 40 L20 76 L4 40 Z"/>',
+    '<rect x="5" y="4" width="30" height="72" rx="15"/>',
+    '<path d="M11 8 C24 -2 37 7 32 26 C28 42 37 53 32 70 C28 82 11 79 8 67 C6 54 15 45 11 31 C9 21 2 15 11 8 Z"/>'
+  ];
+  var NAMES={n:['one','two','three'],s:['diamond','oval','squiggle'],c:['red','green','purple'],f:['solid','striped','open']};
+
+  var deck,board,selected,sets,score,startT,timer,locked,hintShown;
+  var $=function(id){return document.getElementById(id)};
+
+  function makeDeck(){
+    var d=[],n,s,c,f;
+    for(n=0;n<3;n++)for(s=0;s<3;s++)for(c=0;c<3;c++)for(f=0;f<3;f++)d.push({n:n,s:s,c:c,f:f});
+    for(var i=d.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=d[i];d[i]=d[j];d[j]=t}
+    return d;
+  }
+  function isSet(a,b,c){
+    return ['n','s','c','f'].every(function(k){return (a[k]+b[k]+c[k])%3===0});
+  }
+  function findSet(cards){
+    for(var i=0;i<cards.length;i++)for(var j=i+1;j<cards.length;j++)for(var k=j+1;k<cards.length;k++){
+      if(cards[i]&&cards[j]&&cards[k]&&isSet(cards[i],cards[j],cards[k]))return [i,j,k];
+    }
+    return null;
+  }
+  function say(t,cls){var m=$('msg');m.textContent=t;m.className=cls||''}
+
+  function cardHTML(card){
+    var fill=card.f===0?COLORS[card.c]:card.f===1?'url(#st'+card.c+')':'none';
+    var one='<svg viewBox="0 0 40 80" aria-hidden="true" fill="'+fill+'" stroke="'+COLORS[card.c]+'" stroke-width="3" stroke-linejoin="round">'+SHAPES[card.s]+'</svg>';
+    var out='';for(var i=0;i<=card.n;i++)out+=one;return out;
+  }
+  function label(card){
+    return NAMES.n[card.n]+' '+NAMES.c[card.c]+' '+NAMES.f[card.f]+' '+NAMES.s[card.s]+(card.n?'s':'');
+  }
+
+  function render(fresh){
+    var b=$('board');
+    b.style.setProperty('--cols',Math.ceil(board.length/3));
+    b.innerHTML='';
+    board.forEach(function(card,i){
+      var el=document.createElement('button');
+      el.className='card'+(selected.indexOf(i)>-1?' sel':'')+(fresh&&fresh.indexOf(i)>-1?' pop':'');
+      el.setAttribute('aria-label',label(card));
+      el.setAttribute('aria-pressed',selected.indexOf(i)>-1?'true':'false');
+      el.dataset.i=i;
+      el.innerHTML=cardHTML(card);
+      el.addEventListener('click',function(){pick(i)});
+      b.appendChild(el);
+    });
+    $('sets').textContent=sets;
+    $('score').textContent=score;
+    $('deck').textContent=deck.length;
+    $('addBtn').disabled=deck.length===0;
+    $('addBtn').style.opacity=deck.length===0?.4:1;
+  }
+
+  function cardEls(){return $('board').children}
+
+  function pick(i){
+    if(locked)return;
+    hintShown=false;
+    var p=selected.indexOf(i);
+    if(p>-1)selected.splice(p,1);else selected.push(i);
+    if(selected.length<3){render();return}
+    // evaluate
+    render();
+    var idx=selected.slice(),els=cardEls();
+    var ok=isSet(board[idx[0]],board[idx[1]],board[idx[2]]);
+    locked=true;
+    idx.forEach(function(k){els[k].classList.remove('sel');els[k].classList.add(ok?'ok':'no')});
+    if(ok){
+      sets++;score+=3;say('Set found! +3','good');
+      setTimeout(function(){takeSet(idx)},450);
+    }else{
+      score-=1;say('Not a set. −1','bad');
+      setTimeout(function(){selected=[];locked=false;render()},550);
+    }
+  }
+
+  function takeSet(idx){
+    var fresh=[];
+    if(board.length<=12&&deck.length>=3){
+      idx.forEach(function(k){board[k]=deck.pop();fresh.push(k)});
+    }else{
+      idx.sort(function(a,b){return b-a}).forEach(function(k){board.splice(k,1)});
+    }
+    selected=[];locked=false;
+    ensurePlayable(fresh);
+  }
+
+  function ensurePlayable(fresh){
+    var added=false;
+    while(!findSet(board)&&deck.length>0){
+      var start=board.length;
+      for(var i=0;i<3&&deck.length;i++)board.push(deck.pop());
+      added=true;
+    }
+    render(fresh);
+    if(!findSet(board)){endGame();return}
+    if(added)say('No sets were on the board, so 3 cards were added.');
+  }
+
+  function addThree(){
+    if(locked||deck.length===0)return;
+    var had=findSet(board);
+    selected=[];
+    var s=board.length;
+    for(var i=0;i<3&&deck.length;i++)board.push(deck.pop());
+    if(had){score-=1;say('Added 3 cards. A set was already on the board (−1).','bad')}
+    else say('Added 3 cards.');
+    render([s,s+1,s+2]);
+  }
+
+  function hint(){
+    if(locked)return;
+    var s=findSet(board);
+    if(!s){say('No sets on the board.');return}
+    score-=1;render();
+    cardEls()[s[0]].classList.add('hint');
+    cardEls()[s[1]].classList.add('hint');
+    say('Two cards from a set are highlighted. −1','');
+    $('score').textContent=score;
+  }
+
+  function fmt(t){var m=Math.floor(t/60),s=t%60;return m+':'+(s<10?'0':'')+s}
+  function endGame(){
+    clearInterval(timer);
+    locked=true;
+    var el=$('over');
+    el.style.display='block';
+    el.innerHTML='<b>Game over.</b> You found '+sets+' sets in '+fmt(Math.floor((Date.now()-startT)/1000))+' with a score of '+score+'.';
+    say('Deck is empty and no sets remain.','good');
+  }
+
+  function newGame(){
+    clearInterval(timer);
+    deck=makeDeck();
+    board=[];for(var i=0;i<12;i++)board.push(deck.pop());
+    selected=[];sets=0;score=0;locked=false;
+    $('over').style.display='none';
+    startT=Date.now();$('time').textContent='0:00';
+    timer=setInterval(function(){$('time').textContent=fmt(Math.floor((Date.now()-startT)/1000))},1000);
+    say('Pick three cards that form a set.');
+    ensurePlayable([0,1,2,3,4,5,6,7,8,9,10,11]);
+  }
+
+  $('newBtn').addEventListener('click',newGame);
+  $('addBtn').addEventListener('click',addThree);
+  $('hintBtn').addEventListener('click',hint);
+  newGame();
+})();
+</script>
+</body>
+</html>
