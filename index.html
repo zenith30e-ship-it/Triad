@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Triples – a pattern-matching card game</title>
+<title>Triad.gg</title>
 <style>
 :root{
   box-sizing:border-box;
@@ -11,17 +11,17 @@
   padding-bottom:env(safe-area-inset-bottom,0px);
   --bg:#ece8e0; --panel:#fbfaf7; --ink:#1d1b24; --muted:#6c6877; --line:#cfc9bd;
   --accent:#2a2f6b; --sel:#2a2f6b; --good:#1f9d55; --bad:#d9363e;
-  --c0:#d9363e; --c1:#1f9d55; --c2:#6b3fa0;
+  --c0:#2563d9; --c1:#ffffff; --c2:#d9363e;
 }
 @media (prefers-color-scheme:dark){
   :root:not([data-theme="light"]){
     --bg:#14131a; --panel:#23212c; --ink:#f1eee8; --muted:#a29eb0; --line:#3a3746;
-    --accent:#9aa3ff; --sel:#9aa3ff; --c0:#ff6b6f; --c1:#3ecf84; --c2:#a77be0;
+    --accent:#9aa3ff; --sel:#9aa3ff; --c0:#5aa2ff; --c1:#f4f4f6; --c2:#ff6b6f;
   }
 }
 :root[data-theme="dark"]{
   --bg:#14131a; --panel:#23212c; --ink:#f1eee8; --muted:#a29eb0; --line:#3a3746;
-  --accent:#9aa3ff; --sel:#9aa3ff; --c0:#ff6b6f; --c1:#3ecf84; --c2:#a77be0;
+  --accent:#9aa3ff; --sel:#9aa3ff; --c0:#5aa2ff; --c1:#f4f4f6; --c2:#ff6b6f;
 }
 html{scroll-padding-top:env(safe-area-inset-top,0px)}
 *{box-sizing:border-box}
@@ -33,13 +33,14 @@ h1{margin:0;font-family:Georgia,"Times New Roman",serif;font-size:2rem;letter-sp
 .stats b{display:block;font-size:1.3rem;color:var(--ink);font-variant-numeric:tabular-nums}
 #msg{min-height:1.6em;margin:4px 0 12px;font-weight:600;color:var(--muted)}
 #msg.good{color:var(--good)} #msg.bad{color:var(--bad)}
-#board{display:grid;grid-template-columns:repeat(var(--cols,4),1fr);gap:12px}
+#board{display:grid;grid-template-columns:repeat(var(--cols,4),minmax(0,1fr));gap:12px}
 .card{
   aspect-ratio:3/2;background:var(--panel);border:2px solid var(--line);border-radius:12px;
   display:flex;align-items:center;justify-content:center;gap:6%;cursor:pointer;padding:6% 4%;
   font:inherit;color:inherit;transition:transform .12s,border-color .12s,box-shadow .12s;
 }
 .card:hover{transform:translateY(-2px)}
+
 .card:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
 .card.sel{border-color:var(--sel);box-shadow:0 0 0 3px var(--sel);transform:translateY(-3px)}
 .card.hint{border-color:var(--good);box-shadow:0 0 0 3px var(--good)}
@@ -58,25 +59,91 @@ details{margin-top:18px;background:var(--panel);border:1px solid var(--line);bor
 summary{cursor:pointer;font-weight:600}
 #over{display:none;margin-top:14px;padding:16px;border-radius:12px;background:var(--panel);border:2px solid var(--good)}
 @media (max-width:600px){
-  #board{grid-template-columns:repeat(3,1fr);gap:8px}
+  #board{grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
   .card{padding:5% 3%;border-radius:9px}
   h1{font-size:1.6rem}
 }
 @media (prefers-reduced-motion:reduce){.card,.card.no,.card.pop{animation:none;transition:none}}
+.wrap{max-width:1000px;padding:20px 16px 32px}
+header{align-items:center;margin-bottom:16px}
+h1{font-size:2.1rem}
+.stats{gap:10px}
+.stats>div{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:6px 14px;text-align:center;min-width:64px;font-size:.75rem;text-transform:uppercase;letter-spacing:.06em}
+.stats b{font-size:1.2rem;text-transform:none;letter-spacing:0}
+#msg{text-align:center;margin:0 0 14px}
+#board{gap:14px;padding:14px;background:rgba(127,127,127,.08);border:1px solid var(--line);border-radius:22px}
+.card{border-width:1.5px;border-radius:14px;box-shadow:0 1px 2px rgba(0,0,0,.06),0 8px 16px -10px rgba(0,0,0,.3);transition:transform .18s cubic-bezier(.2,.8,.2,1),border-color .18s,box-shadow .18s;padding:0 3%;gap:5%}
+.card svg{flex:none;width:29%;height:auto;aspect-ratio:1/1}
+.controls{justify-content:center;gap:12px;margin-top:20px}
+button.btn{border-radius:999px;border-width:1.5px;padding:11px 24px;transition:transform .15s,box-shadow .15s,background .15s;box-shadow:0 1px 2px rgba(0,0,0,.1)}
+button.btn:hover:not(:disabled){transform:translateY(-1px);box-shadow:0 6px 12px -6px rgba(0,0,0,.35)}
+button.btn:disabled{cursor:default}
+details{border-radius:14px;margin-top:20px}
+@media (max-width:600px){#board{padding:8px;gap:8px;border-radius:16px}.card{border-radius:10px}.stats>div{padding:4px 9px;min-width:0}.stats{gap:6px}}
+header{flex-direction:column;justify-content:center;gap:10px}
+h1{width:100%;text-align:center;font-size:clamp(1.9rem,5vw,2.7rem);letter-spacing:.02em}
+.stats{justify-content:center}
+.f1 .ray{fill:none}
+.k1{filter:drop-shadow(0 0 .7px rgba(0,0,0,.8))}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .k1{filter:none}}
+:root[data-theme="dark"] .k1{filter:none}
+#board{--gap:14px;gap:var(--gap);grid-template-columns:repeat(var(--cols,4),calc((100% - (var(--n,4) - 1) * var(--gap)) / var(--n,4)));justify-content:center}
+@media (max-width:600px){#board{--gap:8px;grid-template-columns:repeat(3,minmax(0,1fr))}}
+[hidden]{display:none!important}
+.menu{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;padding:24px;text-align:center}
+.logo{margin:0;font-family:Georgia,"Times New Roman",serif;font-size:clamp(2.6rem,9vw,4.2rem);letter-spacing:.02em}
+.tag{margin:0 0 10px;color:var(--muted)}
+.menu-btns{display:flex;flex-direction:column;gap:14px;width:min(320px,100%)}
+.mbtn{font:inherit;font-size:1.15rem;font-weight:700;padding:16px 20px;border-radius:16px;border:2px solid var(--accent);background:var(--panel);color:var(--accent);cursor:pointer;box-shadow:0 1px 2px rgba(0,0,0,.08),0 10px 20px -12px rgba(0,0,0,.35);transition:transform .15s,background .15s,color .15s}
+.mbtn:hover{background:var(--accent);color:var(--bg);transform:translateY(-2px)}
+.mbtn:focus-visible{outline:3px solid var(--accent);outline-offset:3px}
+#menuNote{min-height:1.4em;margin:0;color:var(--muted);max-width:320px}
+.burger{position:fixed;top:calc(env(safe-area-inset-top,0px) + 12px);right:14px;z-index:30;width:44px;height:44px;border-radius:12px;border:1.5px solid var(--line);background:var(--panel);cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;padding:0}
+.burger span{display:block;width:20px;height:2.5px;border-radius:2px;background:var(--ink)}
+.burger:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.settings{position:fixed;top:0;right:0;bottom:0;width:min(320px,88vw);z-index:40;background:var(--panel);border-left:1px solid var(--line);box-shadow:-12px 0 30px -12px rgba(0,0,0,.4);padding:calc(env(safe-area-inset-top,0px) + 18px) 18px calc(env(safe-area-inset-bottom,0px) + 18px);overflow-y:auto}
+.settings h2{margin:0 0 16px;font-family:Georgia,serif;font-size:1.4rem;display:flex;justify-content:space-between;align-items:center}
+.settings h2 button{border:0;background:none;color:var(--ink);font-size:1.3rem;cursor:pointer}
+.opt{margin:14px 0}
+.opt>span{display:block;font-weight:600;margin-bottom:8px}
+.seg{display:flex;border:1.5px solid var(--accent);border-radius:999px;overflow:hidden}
+.seg button{flex:1;font:inherit;padding:8px 6px;border:0;background:transparent;color:var(--accent);cursor:pointer}
+.seg button.on{background:var(--accent);color:var(--bg)}
+.row{display:flex;justify-content:space-between;align-items:center;margin:14px 0;font-weight:600}
+.row input{width:20px;height:20px;accent-color:var(--accent)}
+#gameWrap.puz .stats>div:nth-child(3),#gameWrap.puz #addBtn{display:none}
 </style>
 </head>
 <body>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
   <defs>
-    <pattern id="st0" width="4" height="4.5" patternUnits="userSpaceOnUse"><rect width="4" height="1.6" fill="var(--c0)"/></pattern>
-    <pattern id="st1" width="4" height="4.5" patternUnits="userSpaceOnUse"><rect width="4" height="1.6" fill="var(--c1)"/></pattern>
-    <pattern id="st2" width="4" height="4.5" patternUnits="userSpaceOnUse"><rect width="4" height="1.6" fill="var(--c2)"/></pattern>
+    <pattern id="st0" width="4" height="4" patternUnits="userSpaceOnUse"><rect width="4" height="1" fill="var(--c0)"/></pattern>
+    <pattern id="st1" width="4" height="4" patternUnits="userSpaceOnUse"><rect width="4" height="1" fill="var(--c1)"/></pattern>
+    <pattern id="st2" width="4" height="4" patternUnits="userSpaceOnUse"><rect width="4" height="1" fill="var(--c2)"/></pattern>
   </defs>
 </svg>
 
-<div class="wrap">
+<button id="burger" class="burger" aria-label="Settings" aria-expanded="false"><span></span><span></span><span></span></button>
+<div id="menu" class="menu">
+  <h1 class="logo">Triad.gg</h1>
+  <p class="tag">Find sets of three</p>
+  <div class="menu-btns">
+    <button class="mbtn" data-mode="online">Online</button>
+    <button class="mbtn" data-mode="offline">Offline</button>
+    <button class="mbtn" data-mode="puzzles">Puzzles</button>
+  </div>
+  <p id="menuNote" role="status"></p>
+</div>
+<aside id="settings" class="settings" hidden aria-label="Settings">
+  <h2>Settings <button id="closeSet" aria-label="Close settings">✕</button></h2>
+  <div class="opt"><span>Theme</span><div class="seg" id="themeSeg"><button data-t="light">Light</button><button data-t="dark">Dark</button></div></div>
+  <label class="row">Show timer <input type="checkbox" id="optTimer"></label>
+  <label class="row">Show hint button <input type="checkbox" id="optHint"></label>
+  <button class="btn" id="toMenuBtn" style="width:100%;margin-top:18px">Back to menu</button>
+</aside>
+<div class="wrap" id="gameWrap" hidden>
   <header>
-    <h1>Triples</h1>
+    <h1>Triad.gg</h1>
     <div class="stats">
       <div>Sets<b id="sets">0</b></div>
       <div>Score<b id="score">0</b></div>
@@ -93,11 +160,12 @@ summary{cursor:pointer;font-weight:600}
     <button class="btn" id="hintBtn">Hint</button>
     <button class="btn" id="addBtn">Add 3 cards</button>
     <button class="btn primary" id="newBtn">New game</button>
+    <button class="btn" id="menuBtn">Menu</button>
   </div>
 
   <details>
     <summary>How to play</summary>
-    <p>Every card has four features: <b>number</b> (1, 2, 3), <b>shape</b> (diamond, oval, squiggle), <b>color</b> (red, green, purple) and <b>shading</b> (solid, striped, open). A set is three cards where, for each feature, all three cards are the <i>same</i> or all three are <i>different</i>.</p>
+    <p>Every card has four features: <b>number</b> (1, 2, 3), <b>shape</b> (moon, sun, star), <b>color</b> (blue, white, red) and <b>fill</b> (full, lines, unfilled). A set is three cards where, for each feature, all three cards are the <i>same</i> or all three are <i>different</i>.</p>
     <p>Select three cards. A valid set is removed and replaced from the deck (+3 points). An invalid pick costs 1 point. If you can’t find a set, use Hint (−1) or add three more cards. The game ends when the deck is empty and no sets remain.</p>
   </details>
 </div>
@@ -106,11 +174,11 @@ summary{cursor:pointer;font-weight:600}
 (function(){
   var COLORS=['var(--c0)','var(--c1)','var(--c2)'];
   var SHAPES=[
-    '<path d="M20 4 L36 40 L20 76 L4 40 Z"/>',
-    '<rect x="5" y="4" width="30" height="72" rx="15"/>',
-    '<path d="M11 8 C24 -2 37 7 32 26 C28 42 37 53 32 70 C28 82 11 79 8 67 C6 54 15 45 11 31 C9 21 2 15 11 8 Z"/>'
+    '<path d="M20.9 6.1 A21 21 0 1 0 43.5 31.5 A17 17 0 0 1 20.9 6.1 Z" style="stroke-width:1.2" transform="translate(3 -1.5)"/>',
+    (function(){var s='<circle cx="25" cy="25" r="12" style="stroke-width:1.2"/>';for(var k=0;k<8;k++)s+='<path class="ray" d="M25 2 L30 8.5 L20 8.5 Z" style="stroke-width:1.2" transform="rotate('+(k*45)+' 25 25)"/>';return s})(),
+    '<path d="M25 3 C27 15 35 23 47 25 C35 27 27 35 25 47 C23 35 15 27 3 25 C15 23 23 15 25 3 Z" style="stroke-width:1.2"/>'
   ];
-  var NAMES={n:['one','two','three'],s:['diamond','oval','squiggle'],c:['red','green','purple'],f:['solid','striped','open']};
+  var NAMES={n:['one','two','three'],s:['moon','sun','star'],c:['blue','white','red'],f:['full','lines','unfilled']};
 
   var deck,board,selected,sets,score,startT,timer,locked,hintShown;
   var $=function(id){return document.getElementById(id)};
@@ -134,7 +202,7 @@ summary{cursor:pointer;font-weight:600}
 
   function cardHTML(card){
     var fill=card.f===0?COLORS[card.c]:card.f===1?'url(#st'+card.c+')':'none';
-    var one='<svg viewBox="0 0 40 80" aria-hidden="true" fill="'+fill+'" stroke="'+COLORS[card.c]+'" stroke-width="3" stroke-linejoin="round">'+SHAPES[card.s]+'</svg>';
+    var one='<svg class="k'+card.c+' f'+card.f+'" viewBox="1 1 48 48" aria-hidden="true" fill="'+fill+'" stroke="'+COLORS[card.c]+'" stroke-width="2.6" stroke-linejoin="round" stroke-linecap="round">'+SHAPES[card.s]+'</svg>';
     var out='';for(var i=0;i<=card.n;i++)out+=one;return out;
   }
   function label(card){
@@ -143,7 +211,7 @@ summary{cursor:pointer;font-weight:600}
 
   function render(fresh){
     var b=$('board');
-    b.style.setProperty('--cols',Math.ceil(board.length/3));
+    var cols=Math.ceil(board.length/3);b.style.setProperty('--cols',cols);b.style.setProperty('--n',Math.max(4,cols));
     b.innerHTML='';
     board.forEach(function(card,i){
       var el=document.createElement('button');
@@ -186,6 +254,7 @@ summary{cursor:pointer;font-weight:600}
   }
 
   function takeSet(idx){
+    if(mode==='puzzles'){selected=[];locked=false;newPuzzle();return}
     var fresh=[];
     if(board.length<=12&&deck.length>=3){
       idx.forEach(function(k){board[k]=deck.pop();fresh.push(k)});
@@ -252,10 +321,63 @@ summary{cursor:pointer;font-weight:600}
     ensurePlayable([0,1,2,3,4,5,6,7,8,9,10,11]);
   }
 
-  $('newBtn').addEventListener('click',newGame);
+  $('newBtn').addEventListener('click',function(){startMode(mode)});
   $('addBtn').addEventListener('click',addThree);
   $('hintBtn').addEventListener('click',hint);
-  newGame();
+  var mode='offline';
+  var S={theme:'dark',timer:true,hint:true};
+  try{var sv=JSON.parse(localStorage.getItem('triad-settings')||'null');if(sv)for(var q in sv)S[q]=sv[q]}catch(e){}
+  function applySettings(){
+    var r=document.documentElement;
+    if(S.theme!=='light')S.theme='dark';r.setAttribute('data-theme',S.theme);
+    $('time').parentNode.style.display=S.timer?'':'none';
+    $('hintBtn').style.display=S.hint?'':'none';
+    document.querySelectorAll('#themeSeg button').forEach(function(b){b.classList.toggle('on',b.dataset.t===S.theme)});
+    $('optTimer').checked=S.timer;$('optHint').checked=S.hint;
+    try{localStorage.setItem('triad-settings',JSON.stringify(S))}catch(e){}
+  }
+  function newPuzzle(){
+    var cards,n,tries=0;
+    do{
+      cards=makeDeck().slice(0,9);n=0;
+      for(var i=0;i<9;i++)for(var j=i+1;j<9;j++)for(var k=j+1;k<9;k++)if(isSet(cards[i],cards[j],cards[k]))n++;
+    }while(n!==1&&++tries<2000);
+    board=cards;deck=[];selected=[];locked=false;
+    render([0,1,2,3,4,5,6,7,8]);
+  }
+  function startMode(m){
+    mode=m;
+    $('menu').hidden=true;$('gameWrap').hidden=false;
+    $('gameWrap').classList.toggle('puz',m==='puzzles');
+    $('over').style.display='none';
+    if(m==='puzzles'){
+      clearInterval(timer);
+      sets=0;score=0;locked=false;
+      startT=Date.now();$('time').textContent='0:00';
+      timer=setInterval(function(){$('time').textContent=fmt(Math.floor((Date.now()-startT)/1000))},1000);
+      newPuzzle();
+      say('Find the one set hidden in these 9 cards.');
+    }else newGame();
+  }
+  function toMenu(){
+    clearInterval(timer);
+    $('gameWrap').hidden=true;$('menu').hidden=false;$('settings').hidden=true;
+    $('burger').setAttribute('aria-expanded','false');$('menuNote').textContent='';
+  }
+  document.querySelectorAll('.mbtn').forEach(function(b){b.addEventListener('click',function(){
+    var m=b.dataset.mode;
+    if(m==='online'){$('menuNote').textContent='Online play isn’t available yet. Try Offline or Puzzles for now.';return}
+    startMode(m==='puzzles'?'puzzles':'offline');
+  })});
+  $('burger').addEventListener('click',function(){var s=$('settings');s.hidden=!s.hidden;this.setAttribute('aria-expanded',String(!s.hidden))});
+  $('closeSet').addEventListener('click',function(){$('settings').hidden=true;$('burger').setAttribute('aria-expanded','false')});
+  document.addEventListener('keydown',function(e){if(e.key==='Escape')$('closeSet').click()});
+  document.querySelectorAll('#themeSeg button').forEach(function(b){b.addEventListener('click',function(){S.theme=b.dataset.t;applySettings()})});
+  $('optTimer').addEventListener('change',function(){S.timer=this.checked;applySettings()});
+  $('optHint').addEventListener('change',function(){S.hint=this.checked;applySettings()});
+  $('toMenuBtn').addEventListener('click',toMenu);
+  $('menuBtn').addEventListener('click',toMenu);
+  applySettings();
 })();
 </script>
 </body>
